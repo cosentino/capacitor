@@ -56,23 +56,11 @@ public class CAPFilesystemPlugin : CAPPlugin {
     }
     let directoryOption = call.get("directory", String.self, DEFAULT_DIRECTORY)!
     
-    guard let fileUrl = getFileUrl(file, directoryOption) else {
-      handleError(call, "Invalid path")
-      return
-    }
-
     do {
-      if encoding != nil {
-        let data = try String(contentsOf: fileUrl, encoding: .utf8)
-        call.success([
-          "data": data
-        ])
-      } else {
-        let data = try Data(contentsOf: fileUrl)
-        call.success([
-          "data": data.base64EncodedString()
-        ])
-      }
+      let data = try FilesystemUtils.readFileString(file, directoryOption, encoding)
+      call.resolve([
+        "data": data
+      ])
     } catch let error as NSError {
       handleError(call, error.localizedDescription, error)
     }
@@ -85,7 +73,7 @@ public class CAPFilesystemPlugin : CAPPlugin {
     let encoding = call.getString("encoding")
     let recursive = call.get("recursive", Bool.self, false)!
     // TODO: Allow them to switch encoding
-    guard let file = call.get("path", String.self) else {
+    guard let path = call.get("path", String.self) else {
       handleError(call, "path must be provided and must be a string.")
       return
     }
@@ -96,11 +84,6 @@ public class CAPFilesystemPlugin : CAPPlugin {
     }
       
     let directoryOption = call.get("directory", String.self) ?? DEFAULT_DIRECTORY
-
-    guard let fileUrl = getFileUrl(file, directoryOption) else {
-      handleError(call, "Invalid path")
-      return
-    }
 
     do {
       if !FileManager.default.fileExists(atPath: fileUrl.deletingLastPathComponent().path) {
@@ -147,7 +130,7 @@ public class CAPFilesystemPlugin : CAPPlugin {
     }
     
     let directoryOption = call.get("directory", String.self) ?? DEFAULT_DIRECTORY
-    guard let fileUrl = getFileUrl(file, directoryOption) else {
+    guard let fileUrl = FilesystemUtils.getFileUrl(file, directoryOption) else {
       handleError(call, "Invalid path")
       return
     }
@@ -163,7 +146,7 @@ public class CAPFilesystemPlugin : CAPPlugin {
           }
           writeData = userData
         } else {
-          let cleanData = getCleanData(data)
+          let cleanData = FilesystemUtils.getCleanBase64Data(data)
           if let base64Data = Data(base64Encoded: cleanData) {
             writeData = base64Data
           } else {
@@ -185,14 +168,6 @@ public class CAPFilesystemPlugin : CAPPlugin {
     }
   }
 
-  func getCleanData(_ data: String) -> String {
-    let dataParts = data.split(separator: ",")
-    var cleanData = data
-    if dataParts.count > 0 {
-      cleanData = String(dataParts.last!)
-    }
-    return cleanData
-  }
 
   /**
    * Delete a file.
@@ -206,7 +181,7 @@ public class CAPFilesystemPlugin : CAPPlugin {
     }
     
     let directoryOption = call.get("directory", String.self) ?? DEFAULT_DIRECTORY
-    guard let fileUrl = getFileUrl(file, directoryOption) else {
+    guard let fileUrl = FilesystemUtils.getFileUrl(file, directoryOption) else {
       handleError(call, "Invalid path")
       return
     }
@@ -233,7 +208,7 @@ public class CAPFilesystemPlugin : CAPPlugin {
     
     let recursive = call.get("recursive", Bool.self, false)!
     let directoryOption = call.get("directory", String.self, DEFAULT_DIRECTORY)!
-    guard let fileUrl = getFileUrl(path, directoryOption) else {
+    guard let fileUrl = FilesystemUtils.getFileUrl(path, directoryOption) else {
       handleError(call, "Invalid path")
       return
     }
@@ -257,7 +232,7 @@ public class CAPFilesystemPlugin : CAPPlugin {
     }
     
     let directoryOption = call.get("directory", String.self, DEFAULT_DIRECTORY)!
-    guard let fileUrl = getFileUrl(path, directoryOption) else {
+    guard let fileUrl = FilesystemUtils.getFileUrl(path, directoryOption) else {
       handleError(call, "Invalid path")
       return
     }
@@ -293,7 +268,7 @@ public class CAPFilesystemPlugin : CAPPlugin {
     }
     
     let directoryOption = call.get("directory", String.self, DEFAULT_DIRECTORY)!
-    guard let fileUrl = getFileUrl(path, directoryOption) else {
+    guard let fileUrl = FilesystemUtils.getFileUrl(path, directoryOption) else {
       handleError(call, "Invalid path")
       return
     }
@@ -321,7 +296,7 @@ public class CAPFilesystemPlugin : CAPPlugin {
     }
     
     let directoryOption = call.get("directory", String.self, DEFAULT_DIRECTORY)!
-    guard let fileUrl = getFileUrl(path, directoryOption) else {
+    guard let fileUrl = FilesystemUtils.getFileUrl(path, directoryOption) else {
       handleError(call, "Invalid path")
       return
     }
@@ -347,7 +322,7 @@ public class CAPFilesystemPlugin : CAPPlugin {
     }
     
     let directoryOption = call.get("directory", String.self, DEFAULT_DIRECTORY)!
-    guard let fileUrl = getFileUrl(path, directoryOption) else {
+    guard let fileUrl = FilesystemUtils.getFileUrl(path, directoryOption) else {
       handleError(call, "Invalid path")
       return
     }
@@ -388,12 +363,12 @@ public class CAPFilesystemPlugin : CAPPlugin {
       toDirectoryOption = directoryOption;
     }
     
-    guard let fromUrl = getFileUrl(from, directoryOption) else {
+    guard let fromUrl = FilesystemUtils.getFileUrl(from, directoryOption) else {
       handleError(call, "Invalid from path")
       return
     }
     
-    guard let toUrl = getFileUrl(to, toDirectoryOption) else {
+    guard let toUrl = FilesystemUtils.getFileUrl(to, toDirectoryOption) else {
       handleError(call, "Invalid to path")
       return
     }

@@ -1,5 +1,11 @@
 import { Plugin, PluginListenerHandle } from './definitions';
 
+import { HttpPlugin } from './plugins/http';
+import { FilesystemPlugin } from './plugins/fs';
+
+export * from './plugins/http';
+export * from './plugins/fs';
+
 export interface PluginRegistry {
   Accessibility: AccessibilityPlugin;
   App: AppPlugin;
@@ -11,6 +17,7 @@ export interface PluginRegistry {
   Filesystem: FilesystemPlugin;
   Geolocation: GeolocationPlugin;
   Haptics: HapticsPlugin;
+  Http: HttpPlugin;
   Keyboard: KeyboardPlugin;
   LocalNotifications: LocalNotificationsPlugin;
   Modals: ModalsPlugin;
@@ -950,6 +957,8 @@ export enum HapticsNotificationType {
   WARNING = 'WARNING',
   ERROR = 'ERROR'
 }
+
+// Vibrate
 
 export interface VibrateOptions {
   duration?: number;

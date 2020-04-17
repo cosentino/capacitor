@@ -1,0 +1,19 @@
+ion-textarea {
+  border: 1px solid #eee;
+  textarea {
+    height: 500px;
+  }
+}
+
+#output {
+  height: 400px;
+  overflow: auto;
+
+  unicode-bidi: embed;
+  font-family: monospace;
+  white-space: pre;
+  word-wrap: break-word;
+  max-width: 100%;
+  word-break: break-word;
+  white-space: pre;
+}
