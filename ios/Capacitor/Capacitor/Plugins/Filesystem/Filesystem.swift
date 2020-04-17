@@ -5,7 +5,37 @@ import Foundation
 public class CAPFilesystemPlugin : CAPPlugin {
   let DEFAULT_DIRECTORY = "DOCUMENTS"
   
-
+  /**
+   * Get the SearchPathDirectory corresponding to the JS string
+   */
+  func getDirectory(directory: String) -> FileManager.SearchPathDirectory {
+    switch directory {
+    case "DOCUMENTS":
+      return .documentDirectory
+    case "CACHE":
+      return .cachesDirectory
+    default:
+      return .documentDirectory
+    }
+  }
+  
+  /**
+   * Get the URL for this file, supporting file:// paths and
+   * files with directory mappings.
+   */
+  func getFileUrl(_ path: String, _ directoryOption: String) -> URL? {
+    if path.starts(with: "file://") {
+      return URL(string: path)
+    }
+    
+    let directory = getDirectory(directory: directoryOption)
+    
+    guard let dir = FileManager.default.urls(for: directory, in: .userDomainMask).first else {
+      return nil
+    }
+    
+    return dir.appendingPathComponent(path)
+  }
 
   /**
    * Helper for handling errors
@@ -56,8 +86,25 @@ public class CAPFilesystemPlugin : CAPPlugin {
     let directoryOption = call.get("directory", String.self) ?? DEFAULT_DIRECTORY
 
     do {
-      let fileUrl = try FilesystemUtils.writeFileString(path, directoryOption, encoding, data, recursive)
-      
+      if !FileManager.default.fileExists(atPath: fileUrl.deletingLastPathComponent().path) {
+        if recursive {
+          try FileManager.default.createDirectory(at: fileUrl.deletingLastPathComponent(), withIntermediateDirectories: recursive, attributes: nil)
+        } else {
+          handleError(call, "Parent folder doesn't exist");
+          return
+        }
+      }
+      if encoding != nil {
+        try data.write(to: fileUrl, atomically: false, encoding: .utf8)
+      } else {
+        let cleanData = getCleanData(data)
+        if let base64Data = Data(base64Encoded: cleanData) {
+          try base64Data.write(to: fileUrl)
+        } else {
+          handleError(call, "Unable to save file")
+          return
+        }
+      }
       call.success([
         "uri": fileUrl.absoluteString
       ])

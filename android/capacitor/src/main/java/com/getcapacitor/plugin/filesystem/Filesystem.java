@@ -62,6 +62,44 @@ public class Filesystem extends Plugin {
     return null;
   }
 
+  private File getDirectory(String directory) {
+    Context c = bridge.getContext();
+    switch(directory) {
+      case "DOCUMENTS":
+        return Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+      case "DATA":
+        return c.getFilesDir();
+      case "CACHE":
+        return c.getCacheDir();
+      case "EXTERNAL":
+        return c.getExternalFilesDir(null);
+      case "EXTERNAL_STORAGE":
+        return Environment.getExternalStorageDirectory();
+    }
+    return null;
+  }
+
+  private File getFileObject(String path, String directory) {
+    if (directory == null) {
+      Uri u = Uri.parse(path);
+      if (u.getScheme() == null || u.getScheme().equals("file")) {
+        return new File(u.getPath());
+      }
+    }
+
+    File androidDirectory = this.getDirectory(directory);
+
+    if (androidDirectory == null) {
+      return null;
+    } else {
+      if(!androidDirectory.exists()) {
+        androidDirectory.mkdir();
+      }
+    }
+
+    return new File(androidDirectory, path);
+  }
+
   private InputStream getInputStream(String path, String directory) throws IOException {
     if (directory == null) {
       Uri u = Uri.parse(path);

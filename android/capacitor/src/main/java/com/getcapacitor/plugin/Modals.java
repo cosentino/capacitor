@@ -124,7 +124,9 @@ public class Modals extends Plugin {
     }
 
     final ModalsBottomSheetDialogFragment fragment = new ModalsBottomSheetDialogFragment();
+    fragment.setTitle(title);
     fragment.setOptions(options);
+    fragment.setCancelable(false);
     fragment.setOnSelectedListener(new ModalsBottomSheetDialogFragment.OnSelectedListener() {
       @Override
       public void onSelected(int index) {

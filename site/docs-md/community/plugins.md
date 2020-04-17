@@ -33,7 +33,6 @@ Are we missing your awesome plugin? [Add it to this page](https://github.com/ion
 | Google Sign-in | `@codetrix-studio/capacitor-google-auth` | <https://github.com/CodetrixStudio/CapacitorGoogleAuth> | Works with Firebase. Lightweight |
 | Face ID | `capacitor-face-id` | <https://github.com/danielsogl/capacitor-face-id> | |
 | Biometric AUth | `capacitor-biometric-auth` | <https://github.com/arielhernandezmusa/capacitor-biometric-auth> | Allow to use Face ID and Touch ID in the same plugin |
-| Apple Login | `capacitor-apple-login` | <https://github.com/htorbov/capacitor-apple-login> | |
 
 ## Deep Links
 
@@ -52,6 +51,8 @@ Are we missing your awesome plugin? [Add it to this page](https://github.com/ion
 | Name                    | NPM package | GitHub | Notes |
 | ----------------------- | ----------- | ------ | ------ |
 | Secure Storage Plugin | `capacitor-secure-storage-plugin` | <https://github.com/martinkasa/capacitor-secure-storage-plugin> | |
+| Data Storage SQLite Plugin | `capacitor-data-storage-sqlite` | <https://github.com/jepiqueau/capacitor-data-storage-sqlite> | |
+| SQLite Database Plugin | `capacitor-sqlite` | <https://github.com/jepiqueau/capacitor-sqlite> | |
 
 ## Video
 
@@ -62,6 +63,7 @@ Are we missing your awesome plugin? [Add it to this page](https://github.com/ion
 | Video Recorder | `@teamhive/capacitor-video-recorder` | <https://github.com/TeamHive/capacitor-video-recorder> | |
 | Media Operations | `capacitor-media` | <https://github.com/stewwan/capacitor-media> | |
 | Camera preview | `capacitor-camera-preview` | <https://github.com/arielhernandezmusa/capacitor-camera-preview> | |
+| VideoPlayer | `capacitor-video-player` | <https://github.com/jepiqueau/capacitor-video-player> | |
 
 ## Analytics
 
@@ -102,6 +104,7 @@ Are we missing your awesome plugin? [Add it to this page](https://github.com/ion
 | Name                    | NPM package | GitHub | Notes |
 | ----------------------- | ----------- | ------ | ------ |
 | Google Fit | `capacitor-google-fit` | <https://github.com/Ad-Scientiam/capacitor-google-fit> | Android only (currently) |
+| HealthKit | `capacitor-healthkit` | <https://github.com/Ad-Scientiam/capacitor-healthkit> | iOS only |
 
 ## Audio
 
@@ -176,3 +179,4 @@ Are we missing your awesome plugin? [Add it to this page](https://github.com/ion
 | Install Referrer | `capacitor-install-referrer` | <https://github.com/eladcandroid/capacitor-install-referrer> | |
 | Request app review | `capacitor-rate-app` | <https://github.com/Nodonisko/capacitor-rate-app> | Request app review from users |
 | Change Android Navigationbar Color | `capacitor-navigationbar` | <https://github.com/nikosdouvlis/capacitor-navigationbar> | Programmatically change the navigation bar color on android devices |
+| Dark Mode | `capacitor-dark-mode` | <https://github.com/hinddeep/ionicCapacitorDarkMode> | | Listen for dark mode change events

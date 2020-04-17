@@ -70,6 +70,11 @@ export interface AccessibilityPlugin {
    * Listen for screen reader state change (on/off)
    */
   addListener(eventName: 'accessibilityScreenReaderStateChange', listenerFunc: ScreenReaderStateChangeCallback): PluginListenerHandle;
+
+  /**
+   * Remove all native listeners for this plugin
+   */
+  removeAllListeners(): void;
 }
 
 export interface AccessibilitySpeakOptions {
@@ -110,6 +115,11 @@ export interface AppPlugin extends Plugin {
   openUrl(options: { url: string }): Promise<{completed: boolean}>;
 
   /**
+   * Gets the current app state
+   */
+  getState(): Promise<AppState>;
+
+  /**
    * Get the URL the app was launched with, if any
    */
   getLaunchUrl(): Promise<AppLaunchUrl>;
@@ -138,6 +148,11 @@ export interface AppPlugin extends Plugin {
    * If you want to close the app, call `App.exitApp()`.
    */
   addListener(eventName: 'backButton', listenerFunc: (data: AppUrlOpen) => void): PluginListenerHandle;
+
+  /**
+   * Remove all native listeners for this plugin
+   */
+  removeAllListeners(): void;
 }
 
 export interface AppState {
@@ -180,7 +195,17 @@ export interface AppRestoredResult {
    * The result data passed from the plugin. This would be the result you'd
    * expect from normally calling the plugin method. For example, `CameraPhoto`
    */
-  data: any;
+  data?: any;
+  /**
+   * Boolean indicating if the plugin call succeeded
+   */
+  success: boolean;
+  /**
+   * If the plugin call didn't succeed, it will contain the error message
+   */
+  error?: {
+    message: string;
+  }
 }
 
 //
@@ -232,6 +257,10 @@ export interface BrowserPlugin extends Plugin {
 
   addListener(eventName: 'browserFinished', listenerFunc: (info: any) => void): PluginListenerHandle;
   addListener(eventName: 'browserPageLoaded', listenerFunc: (info: any) => void): PluginListenerHandle;
+  /**
+   * Remove all native listeners for this plugin
+   */
+  removeAllListeners(): void;
 }
 
 export interface BrowserOpenOptions {
@@ -286,7 +315,9 @@ export interface CameraOptions {
    */
   resultType: CameraResultType;
   /**
-   * Whether to save the photo to the gallery/photostream
+   * Whether to save the photo to the gallery.
+   * If the photo was picked from the gallery, it will only be saved if edited.
+   * Default: false
    */
   saveToGallery?: boolean;
   /**
@@ -377,7 +408,7 @@ export interface ClipboardPlugin extends Plugin {
   /**
    * Read a value from the clipboard (the "paste" action)
    */
-  read(options: ClipboardRead): Promise<ClipboardReadResult>;
+  read(): Promise<ClipboardReadResult>;
 }
 
 export interface ClipboardWrite {
@@ -387,12 +418,9 @@ export interface ClipboardWrite {
   label?: string; // Android only
 }
 
-export interface ClipboardRead {
-  type: 'string' | 'url' | 'image';
-}
-
 export interface ClipboardReadResult {
   value: string;
+  type: string;
 }
 
 //
@@ -415,6 +443,11 @@ export interface DevicePlugin extends Plugin {
 export type OperatingSystem = 'ios' | 'android' | 'windows' | 'mac' | 'unknown';
 
 export interface DeviceInfo {
+  /**
+   * Note: this property is iOS only.
+   * The name of the device. For example, "John's iPhone"
+   */
+  name?: string;
   /**
    * The device model. For example, "iPhone"
    */
@@ -482,6 +515,331 @@ export interface DeviceBatteryInfo {
 export interface DeviceLanguageCodeResult {
   value: string;
 }
+//
+
+export interface FilesystemPlugin extends Plugin {
+  /**
+   * Read a file from disk
+   * @param options options for the file read
+   * @return a promise that resolves with the read file data result
+   */
+  readFile(options: FileReadOptions): Promise<FileReadResult>;
+
+  /**
+   * Write a file to disk in the specified location on device
+   * @param options options for the file write
+   * @return a promise that resolves with the file write result
+   */
+  writeFile(options: FileWriteOptions): Promise<FileWriteResult>;
+
+  /**
+   * Append to a file on disk in the specified location on device
+   * @param options options for the file append
+   * @return a promise that resolves with the file write result
+   */
+  appendFile(options: FileAppendOptions): Promise<FileAppendResult>;
+
+  /**
+   * Delete a file from disk
+   * @param options options for the file delete
+   * @return a promise that resolves with the deleted file data result
+   */
+  deleteFile(options: FileDeleteOptions): Promise<FileDeleteResult>;
+
+  /**
+   * Create a directory.
+   * @param options options for the mkdir
+   * @return a promise that resolves with the mkdir result
+   */
+  mkdir(options: MkdirOptions): Promise<MkdirResult>;
+
+  /**
+   * Remove a directory
+   * @param options the options for the directory remove
+   */
+  rmdir(options: RmdirOptions): Promise<RmdirResult>;
+
+  /**
+   * Return a list of files from the directory (not recursive)
+   * @param options the options for the readdir operation
+   * @return a promise that resolves with the readdir directory listing result
+   */
+  readdir(options: ReaddirOptions): Promise<ReaddirResult>;
+
+  /**
+   * Return full File URI for a path and directory
+   * @param options the options for the stat operation
+   * @return a promise that resolves with the file stat result
+   */
+  getUri(options: GetUriOptions): Promise<GetUriResult>;
+
+  /**
+   * Return data about a file
+   * @param options the options for the stat operation
+   * @return a promise that resolves with the file stat result
+   */
+  stat(options: StatOptions): Promise<StatResult>;
+
+  /**
+   * Rename a file or directory
+   * @param options the options for the rename operation
+   * @return a promise that resolves with the rename result
+   */
+  rename(options: RenameOptions): Promise<RenameResult>;
+
+  /**
+   * Copy a file or directory
+   * @param options the options for the copy operation
+   * @return a promise that resolves with the copy result
+   */
+  copy(options: CopyOptions): Promise<CopyResult>;
+}
+
+export enum FilesystemDirectory {
+  /**
+   * The Documents directory
+   * On iOS it's the app's documents directory.
+   * Use this directory to store user-generated content.
+   * On Android it's the Public Documents folder, so it's accessible from other apps.
+   * It's not accesible on Android 10 and newer.
+   */
+  Documents = 'DOCUMENTS',
+  /**
+   * The Data directory
+   * On iOS it will use the Documents directory
+   * On Android it's the directory holding application files.
+   * Files will be deleted when the application is uninstalled.
+   */
+  Data = 'DATA',
+  /**
+   * The Cache directory
+   * Can be deleted in cases of low memory, so use this directory to write app-specific files
+   * that your app can re-create easily.
+   */
+  Cache = 'CACHE',
+  /**
+   * The external directory
+   * On iOS it will use the Documents directory
+   * On Android it's the directory on the primary shared/external
+   * storage device where the application can place persistent files it owns.
+   * These files are internal to the applications, and not typically visible
+   * to the user as media.
+   * Files will be deleted when the application is uninstalled.
+   */
+  External = 'EXTERNAL',
+  /**
+   * The external storage directory
+   * On iOS it will use the Documents directory
+   * On Android it's the primary shared/external storage directory.
+   * It's not accesible on Android 10 and newer.
+   */
+  ExternalStorage = 'EXTERNAL_STORAGE'
+}
+
+export enum FilesystemEncoding {
+  UTF8 = 'utf8',
+  ASCII = 'ascii',
+  UTF16 = 'utf16'
+}
+
+export interface FileWriteOptions {
+  /**
+   * The filename to write
+   */
+  path: string;
+  /**
+   * The data to write
+   */
+  data: string;
+  /**
+   * The FilesystemDirectory to store the file in
+   */
+  directory?: FilesystemDirectory;
+  /**
+   * The encoding to write the file in. If not provided, data
+   * is written as base64 encoded data.
+   *
+   * Pass FilesystemEncoding.UTF8 to write data as string
+   */
+  encoding?: FilesystemEncoding;
+  /**
+   * Whether to create any missing parent directories.
+   * Defaults to false
+   */
+  recursive?: boolean;
+}
+
+export interface FileAppendOptions {
+  /**
+   * The filename to write
+   */
+  path: string;
+  /**
+   * The data to write
+   */
+  data: string;
+  /**
+   * The FilesystemDirectory to store the file in
+   */
+  directory?: FilesystemDirectory;
+  /**
+   * The encoding to write the file in. If not provided, data
+   * is written as base64 encoded data.
+   *
+   * Pass FilesystemEncoding.UTF8 to write data as string
+   */
+  encoding?: FilesystemEncoding;
+}
+
+export interface FileReadOptions {
+  /**
+   * The filename to read
+   */
+  path: string;
+  /**
+   * The FilesystemDirectory to read the file from
+   */
+  directory?: FilesystemDirectory;
+  /**
+   * The encoding to read the file in, if not provided, data
+   * is read as binary and returned as base64 encoded data.
+   *
+   * Pass FilesystemEncoding.UTF8 to read data as string
+   */
+  encoding?: FilesystemEncoding;
+}
+
+export interface FileDeleteOptions {
+  /**
+   * The filename to delete
+   */
+  path: string;
+  /**
+   * The FilesystemDirectory to delete the file from
+   */
+  directory?: FilesystemDirectory;
+}
+
+export interface MkdirOptions {
+  /**
+   * The path of the new directory
+   */
+  path: string;
+  /**
+   * The FilesystemDirectory to make the new directory in
+   */
+  directory?: FilesystemDirectory;
+  /**
+   * Whether to create any missing parent directories as well.
+   * Defaults to false
+   */
+  recursive?: boolean;
+}
+
+export interface RmdirOptions {
+  /**
+   * The path of the directory to remove
+   */
+  path: string;
+  /**
+   * The FilesystemDirectory to remove the directory from
+   */
+  directory?: FilesystemDirectory;
+  /**
+   * Whether to recursively remove the contents of the directory
+   * Defaults to false
+   */
+  recursive?: boolean;
+}
+
+export interface ReaddirOptions {
+  /**
+   * The path of the directory to read
+   */
+  path: string;
+  /**
+   * The FilesystemDirectory to list files from
+   */
+  directory?: FilesystemDirectory;
+}
+
+export interface GetUriOptions {
+  /**
+   * The path of the file to get the URI for
+   */
+  path: string;
+  /**
+   * The FilesystemDirectory to get the file under
+   */
+  directory: FilesystemDirectory;
+}
+
+export interface StatOptions {
+  /**
+   * The path of the file to get data about
+   */
+  path: string;
+  /**
+   * The FilesystemDirectory to get the file under
+   */
+  directory?: FilesystemDirectory;
+}
+
+export interface CopyOptions {
+  /**
+   * The existing file or directory
+   */
+  from: string;
+  /**
+   * The destination file or directory
+   */
+  to: string;
+  /**
+   * The FilesystemDirectory containing the existing file or directory
+   */
+  directory?: FilesystemDirectory;
+  /**
+   * The FilesystemDirectory containing the destination file or directory. If not supplied will use the 'directory'
+   * parameter as the destination
+   */
+  toDirectory?: FilesystemDirectory;
+}
+
+export interface RenameOptions extends CopyOptions {}
+
+export interface FileReadResult {
+  data: string;
+}
+export interface FileDeleteResult {
+}
+export interface FileWriteResult {
+  uri: string;
+}
+export interface FileAppendResult {
+}
+export interface MkdirResult {
+}
+export interface RmdirResult {
+}
+export interface RenameResult {
+}
+export interface CopyResult {
+}
+export interface ReaddirResult {
+  files: string[];
+}
+export interface GetUriResult {
+  uri: string;
+}
+export interface StatResult {
+  type: string;
+  size: number;
+  ctime: number;
+  mtime: number;
+  uri: string;
+}
+
+//
 
 export interface GeolocationPlugin extends Plugin {
   /**
@@ -639,6 +997,11 @@ export interface KeyboardPlugin extends Plugin {
   addListener(eventName: 'keyboardDidShow', listenerFunc: (info: KeyboardInfo) => void): PluginListenerHandle;
   addListener(eventName: 'keyboardWillHide', listenerFunc: () => void): PluginListenerHandle;
   addListener(eventName: 'keyboardDidHide', listenerFunc: () => void): PluginListenerHandle;
+
+  /**
+   * Remove all native listeners for this plugin
+   */
+  removeAllListeners(): void;
 }
 
 export interface KeyboardInfo {
@@ -717,12 +1080,23 @@ export interface LocalNotification {
   body: string;
   id: number;
   schedule?: LocalNotificationSchedule;
+  /**
+   * Name of the audio file with extension.
+   * On iOS the file should be in the app bundle.
+   * On Android the file should be on res/raw folder.
+   * Doesn't work on Android version 26+ (Android O and newer), for
+   * Recommended format is .wav because is supported by both platforms.
+   */
   sound?: string;
   /**
    * Android-only: set a custom statusbar icon.
    * If set, it overrides default icon from capacitor.config.json
    */
   smallIcon?: string;
+  /**
+   * Android only: set the color of the notification icon
+   */
+  iconColor?: string
   attachments?: LocalNotificationAttachment[];
   actionTypeId?: string;
   extra?: any;
@@ -744,6 +1118,12 @@ export interface LocalNotification {
    * (should be used with the `group` property).
    */
   groupSummary?: boolean;
+  /**
+   * Android only: set the notification channel on which local notification 
+   * will generate. If channel with the given name does not exist then the 
+   * notification will not fire. If not provided, it will use the default channel.
+   */
+  channelId?: string;
 }
 
 export interface LocalNotificationSchedule {
@@ -773,14 +1153,27 @@ export interface LocalNotificationEnabledResult {
   value: boolean;
 }
 
+export interface NotificationPermissionResponse {
+  granted: boolean;
+}
+
 export interface LocalNotificationsPlugin extends Plugin {
   schedule(options: { notifications: LocalNotification[] }): Promise<LocalNotificationScheduleResult>;
   getPending(): Promise<LocalNotificationPendingList>;
   registerActionTypes(options: { types: LocalNotificationActionType[] }): Promise<void>;
   cancel(pending: LocalNotificationPendingList): Promise<void>;
   areEnabled(): Promise<LocalNotificationEnabledResult>;
+  createChannel(channel: NotificationChannel): Promise<void>;
+  deleteChannel(channel: NotificationChannel): Promise<void>;
+  listChannels(): Promise<NotificationChannelList>;
+  requestPermission(): Promise<NotificationPermissionResponse>;
   addListener(eventName: 'localNotificationReceived', listenerFunc: (notification: LocalNotification) => void): PluginListenerHandle;
   addListener(eventName: 'localNotificationActionPerformed', listenerFunc: (notificationAction: LocalNotificationActionPerformed) => void): PluginListenerHandle;
+
+  /**
+   * Remove all native listeners for this plugin
+   */
+  removeAllListeners(): void;
 }
 
 
@@ -840,6 +1233,9 @@ export interface ConfirmResult {
 
 export interface ActionSheetOptions {
   title: string;
+  /**
+   * iOS only
+   */
   message?: string;
   options: ActionSheetOption[];
 }
@@ -874,6 +1270,11 @@ export interface MotionPlugin extends Plugin {
    * Listen for device orientation change (compass heading, etc.)
    */
   addListener(eventName: 'orientation', listenerFunc: (event: MotionOrientationEventResult) => void): PluginListenerHandle;
+
+  /**
+   * Remove all native listeners for this plugin
+   */
+  removeAllListeners(): void;
 }
 
 export type MotionWatchOrientationCallback = (accel: MotionOrientationEventResult) => void;
@@ -917,6 +1318,11 @@ export interface NetworkPlugin extends Plugin {
    * Listen for network status change events
    */
   addListener(eventName: 'networkStatusChange', listenerFunc: (status: NetworkStatus) => void): PluginListenerHandle;
+
+  /**
+   * Remove all native listeners for this plugin
+   */
+  removeAllListeners(): void;
 }
 
 export interface NetworkStatus {
@@ -1168,35 +1574,39 @@ export interface PushNotificationDeliveredList {
   notifications: PushNotification[];
 }
 
-export interface PushNotificationChannel {
+export interface NotificationChannel {
   id: string;
   name: string;
-  description: string;
-  sound: string;
+  description?: string;
+  sound?: string;
   importance: 1 | 2 | 3 | 4 | 5;
   visibility?: -1 | 0 | 1 ;
+  lights?: boolean;
+  lightColor?: string;
 }
 
-export interface PushNotificationChannelList {
-  channels: PushNotificationChannel[];
-}
-
-export interface PushNotificationRegistrationResponse {
-  granted: boolean;
+export interface NotificationChannelList {
+  channels: NotificationChannel[];
 }
 
 export interface PushNotificationsPlugin extends Plugin {
-  register(): Promise<PushNotificationRegistrationResponse>;
+  register(): Promise<void>;
+  requestPermission(): Promise<NotificationPermissionResponse>;
   getDeliveredNotifications(): Promise<PushNotificationDeliveredList>;
   removeDeliveredNotifications(delivered: PushNotificationDeliveredList): Promise<void>;
   removeAllDeliveredNotifications(): Promise<void>;
-  createChannel(channel: PushNotificationChannel): Promise<void>;
-  deleteChannel(channel: PushNotificationChannel): Promise<void>;
-  listChannels(): Promise<PushNotificationChannelList>;
+  createChannel(channel: NotificationChannel): Promise<void>;
+  deleteChannel(channel: NotificationChannel): Promise<void>;
+  listChannels(): Promise<NotificationChannelList>;
   addListener(eventName: 'registration', listenerFunc: (token: PushNotificationToken) => void): PluginListenerHandle;
   addListener(eventName: 'registrationError', listenerFunc: (error: any) => void): PluginListenerHandle;
   addListener(eventName: 'pushNotificationReceived', listenerFunc: (notification: PushNotification) => void): PluginListenerHandle;
   addListener(eventName: 'pushNotificationActionPerformed', listenerFunc: (notification: PushNotificationActionPerformed) => void): PluginListenerHandle;
+
+  /**
+   * Remove all native listeners for this plugin
+   */
+  removeAllListeners(): void;
 }
 
 //
@@ -1282,15 +1692,20 @@ export interface StatusBarPlugin extends Plugin {
   /**
    * Show the status bar
    */
-  show(): Promise<void>;
+  show(options?: StatusBarAnimationOptions): Promise<void>;
   /**
    *  Hide the status bar
    */
-  hide(): Promise<void>;
+  hide(options?: StatusBarAnimationOptions): Promise<void>;
   /**
    *  Get info about the current state of the status bar
    */
   getInfo(): Promise<StatusBarInfoResult>;
+  /**
+   *  Set whether or not the status bar should overlay the webview to allow usage of the space
+   *  around a device "notch"
+   */
+  setOverlaysWebView(options: StatusBarOverlaysWebviewOptions): Promise<void>;
 }
 
 export interface StatusBarStyleOptions {
@@ -1308,6 +1723,28 @@ export enum StatusBarStyle {
   Light = 'LIGHT'
 }
 
+export interface StatusBarAnimationOptions {
+  /**
+   * iOS only. The type of status bar animation used when showing or hiding.
+   */
+  animation: StatusBarAnimation;
+}
+
+export enum StatusBarAnimation {
+  /**
+   * No animation during show/hide.
+   */
+  None = 'NONE',
+  /**
+   * Slide animation during show/hide.
+   */
+  Slide = 'SLIDE',
+  /**
+   * Fade animation during show/hide.
+   */
+  Fade = 'FADE'
+}
+
 export interface StatusBarBackgroundColorOptions {
   color: string;
 }
@@ -1316,6 +1753,11 @@ export interface StatusBarInfoResult {
   visible: boolean;
   style: StatusBarStyle;
   color?: string;
+  overlays?: boolean;
+}
+
+export interface StatusBarOverlaysWebviewOptions {
+  overlay: boolean;
 }
 
 export interface StoragePlugin extends Plugin {

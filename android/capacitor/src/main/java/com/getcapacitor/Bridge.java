@@ -383,7 +383,7 @@ public class Bridge {
     if (isDevMode()) {
       defaultDebuggable = true;
     }
-
+    webView.requestFocusFromTouch();
     WebView.setWebContentsDebuggingEnabled(Config.getBoolean("android.webContentsDebuggingEnabled", defaultDebuggable));
   }
 
@@ -524,10 +524,11 @@ public class Bridge {
             if (call.isSaved()) {
               saveCall(call);
             }
-          } catch(PluginLoadException | InvalidPluginMethodException | PluginInvocationException ex) {
+          } catch(PluginLoadException | InvalidPluginMethodException ex) {
             Log.e(LOG_TAG, "Unable to execute plugin method", ex);
-          } catch(Exception ex) {
+          } catch (Exception ex) {
             Log.e(LOG_TAG, "Serious error executing plugin", ex);
+            throw new RuntimeException(ex);
           }
         }
       };
@@ -656,14 +657,14 @@ public class Bridge {
   protected void storeDanglingPluginResult(PluginCall call, PluginResult result) {
     PluginHandle appHandle = getPlugin("App");
     App appPlugin = (App) appHandle.getInstance();
-    appPlugin.fireRestoredResult(result.getWrappedResult(call));
+    appPlugin.fireRestoredResult(result);
   }
 
   /**
    * Restore any saved bundle state data
    * @param savedInstanceState
    */
-  protected void restoreInstanceState(Bundle savedInstanceState) {
+  public void restoreInstanceState(Bundle savedInstanceState) {
     String lastPluginId = savedInstanceState.getString(BUNDLE_LAST_PLUGIN_ID_KEY);
     String lastPluginCallMethod = savedInstanceState.getString(BUNDLE_LAST_PLUGIN_CALL_METHOD_NAME_KEY);
     String lastOptionsJson = savedInstanceState.getString(BUNDLE_PLUGIN_CALL_OPTIONS_SAVED_KEY);
@@ -862,7 +863,12 @@ public class Bridge {
     return this.localServer.getBasePath();
   }
 
-  public void setServerBasePath(String path){
+  /**
+   * Tell the local server to load files from the given
+   * file path instead of the assets path.
+   * @param path
+   */
+  public void setServerBasePath(String path) {
     localServer.hostFiles(path);
     webView.post(new Runnable() {
       @Override
@@ -872,6 +878,20 @@ public class Bridge {
     });
   }
 
+  /**
+   * Tell the local server to load files from the given
+   * asset path.
+   * @param path
+   */
+  public void setServerAssetPath(String path) {
+    localServer.hostAssets(path);
+    webView.post(new Runnable() {
+      @Override
+      public void run() {
+        webView.loadUrl(appUrl);
+      }
+    });
+  }
 
   public String getLocalUrl() {
     return localUrl;
